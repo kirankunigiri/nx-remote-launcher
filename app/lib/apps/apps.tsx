@@ -139,6 +139,7 @@ const IMAGE_RES_STR = `${IMAGE_RES}/${IMAGE_RES}`;
 
 function AppItem({ app }: { app: App }) {
 	const [imageError, setImageError] = useState(false);
+	const [iconError, setIconError] = useState(false);
 	const titleId = cleanHex(BigInt(app.id));
 	const playerRangeStart = use$(view$.playerRangeStart);
 	const playerRangeEnd = use$(view$.playerRangeEnd);
@@ -179,10 +180,17 @@ function AppItem({ app }: { app: App }) {
 			<div className="relative flex aspect-square w-full items-center justify-center rounded-lg border border-nintendo-border bg-nintendo-bg">
 				{!imageError && (
 					<img
-						src={`https://tinfoil.media/ti/${titleId}/${IMAGE_RES_STR}`}
+						src={iconError ? `https://tinfoil.media/ti/${titleId}/${IMAGE_RES_STR}` : `/icon/${app.id}`}
 						alt={app.name}
+						loading="lazy"
 						className="size-full rounded-md object-cover"
-						onError={() => setImageError(true)}
+						onError={() => {
+							if (iconError) {
+								setImageError(true);
+							} else {
+								setIconError(true);
+							}
+						}}
 					/>
 				)}
 				<div className="absolute bottom-1 right-1 flex size-[16px] items-center justify-center rounded-full border-solid border-black bg-white opacity-80">
