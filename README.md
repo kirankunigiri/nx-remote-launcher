@@ -12,6 +12,17 @@ Open the app on your Switch, and scan the QR code to view your games.
 - Filter by genre and player count.
 - View game details, trailer, and tap to launch.
 
+### External game library connector
+
+The Connect button can send the installed Switch game list to a compatible external library. It follows the device pairing and sync protocol proposed in [VideoGameTrackarr connectors](https://github.com/wwwescape/VideoGameTrackarr/pull/59). This feature requires that connector API to be available on the library server.
+
+1. Create an NX Remote Launcher connector in the library's integrations settings.
+2. Copy its HTTPS endpoint, ending in `/api/connect/<slug>`, into NX Remote Launcher on your phone.
+3. Create a pairing code and approve the device in the library.
+4. Select Sync installed games. The app sends the complete list of installed base game title IDs and names. The connector decides how to handle games no longer installed.
+
+The device token is saved on the Switch SD card in `switch/NXRemoteLauncher/connector.json`. It is not sent to the phone browser. Disconnect removes the local token; to revoke it on the library server, remove the paired device in the connector's settings. Pair again replaces the local connection with a new approval code.
+
 ### Screenshots
 <table>
   <tr align="center">
