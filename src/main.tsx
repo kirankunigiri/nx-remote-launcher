@@ -3,11 +3,12 @@ import {
 	createRequestHandler,
 	type ServerBuild,
 } from '@remix-run/server-runtime';
-import { useEffect, useState } from 'react';
 import { Image, Rect, Text } from 'react-tela';
 import { render } from 'react-tela/render';
 
 import * as build from '../build/server/index.js';
+import { isClientDisconnect } from './http-errors';
+
 let serverBuild = build as unknown as ServerBuild;
 
 let requestHandler: http.ServerHandler;
@@ -21,24 +22,30 @@ if (DEV_MODE) {
 }
 
 const port = 8080;
-http.listen({
-	port,
+const handleRequest = http.createServerHandler(async (req) => {
+	if (
+		DEV_MODE
+		&& req.method === 'POST'
+		&& new URL(req.url).pathname === '/__dev'
+	) {
+		const module = { exports: serverBuild };
+		new Function('module', await req.text())(module);
+		serverBuild = module.exports;
+		console.log(`Dev server updated: ${new Date()}`);
+		return new Response(null, { status: 202 });
+	}
+	let res = await staticHandler(req);
+	if (!res) res = await requestHandler(req);
+	return res;
+});
 
-	async fetch(req) {
-		if (
-			DEV_MODE
-			&& req.method === 'POST'
-			&& new URL(req.url).pathname === '/__dev'
-		) {
-			const module: any = {};
-			new Function('module', await req.text())(module);
-			serverBuild = module.exports;
-			console.log(`Dev server updated: ${new Date()}`);
-			return new Response(null, { status: 202 });
-		}
-		let res = await staticHandler(req);
-		if (!res) res = await requestHandler(req);
-		return res;
+Switch.listen({
+	port,
+	accept(event) {
+		void handleRequest(event).catch((error: unknown) => {
+			if (isClientDisconnect(error)) return;
+			console.error('HTTP connection failed:', error);
+		});
 	},
 });
 
